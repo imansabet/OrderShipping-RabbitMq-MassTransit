@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMassTransit((x) =>
 {
     x.AddConsumer<OrderPlacedConsumer>();
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host("rabbitmq://localhost");
@@ -16,9 +17,15 @@ builder.Services.AddMassTransit((x) =>
 
             e.Bind("order-placed-exchange", x =>
             {
-                x.RoutingKey = "order.shipping";
-                x.ExchangeType = "direct";
+                x.ExchangeType = "fanout";
             });
+
+
+            //e.Bind("order-placed-exchange", x =>
+            //{
+            //    x.RoutingKey = "order.shipping";
+            //    x.ExchangeType = "direct";
+            //});
         });
     });
 });
