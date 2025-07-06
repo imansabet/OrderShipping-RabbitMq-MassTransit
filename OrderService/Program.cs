@@ -12,11 +12,11 @@ builder.Services.AddMassTransit((x) =>
         cfg.Host("rabbitmq://localhost");
 
 
-        cfg.Message<OrderPlaced>(x => x.SetEntityName("order-topic-exchange"));
+        cfg.Message<OrderPlaced>(x => x.SetEntityName("order-headers-exchange"));
 
         //cfg.Publish<OrderPlaced>(x => x.ExchangeType = "direct");
         //cfg.Publish<OrderPlaced>(x => x.ExchangeType = "fanout");
-        cfg.Publish<OrderPlaced>(x => x.ExchangeType = "topic");
+        cfg.Publish<OrderPlaced>(x => x.ExchangeType = "headers");
 
     });
 });
@@ -31,14 +31,32 @@ var app = builder.Build();
 app.MapPost("/orders" , async (OrderRequest order , IBus bus) =>
 {
     var orderPlacedMessage = new OrderPlaced(order.orderId, order.quantity);
-    string routingKey = order.quantity > 10 ? "order.shipping" : "order.regular.tracking";
 
-    await bus.Publish(orderPlacedMessage , async context =>
+    var headers = new Dictionary<string, object>();
+
+    if(order.quantity > 10)
     {
-        context.SetRoutingKey(routingKey);
+        headers["department"] = "shipping";
+        headers["priority"] = "high";
+    }
+    else
+    {
+        headers["department"] = "tracking";
+        headers["priority"] = "low";
+    }
+    await bus.Publish(orderPlacedMessage , context =>
+    {
+        context.Headers.Set("department", headers["department"]);
+        context.Headers.Set("priority", headers["priority"]);
     });
+        //string routingKey = order.quantity > 10 ? "order.shipping" : "order.regular.tracking";
 
-    return Results.Created($"/orders/{order.orderId}" , orderPlacedMessage); 
+    //await bus.Publish(orderPlacedMessage , async context =>
+    //{
+    //    context.SetRoutingKey(routingKey);
+    //});
+
+        return Results.Created($"/orders/{order.orderId}", orderPlacedMessage); 
 });
 
 

@@ -15,10 +15,12 @@ builder.Services.AddMassTransit((x) =>
         {
             e.Consumer<OrderPlacedConsumer>(context);
 
-            e.Bind("order-topic -exchange", x =>
+            e.Bind("order-headers-exchange", x =>
             {
-                x.RoutingKey = "order.*";   // only need messages that contains one word after order 
-                x.ExchangeType = "topic";
+                x.ExchangeType = "headers";  
+                x.SetBindingArgument("department","shipping");
+                x.SetBindingArgument("priority","high");
+                x.SetBindingArgument("x-match","all"); // its sure that all headers are match
             });
 
 

@@ -14,11 +14,19 @@ builder.Services.AddMassTransit((x) =>
         {
             e.Consumer<OrderPlacedConsumer>(context);
 
-            e.Bind("order-topic-exchange", x =>
-            {            
-                x.RoutingKey = "order.#";
-                x.ExchangeType = "topic";
+            e.Bind("order-headers-exchange", x =>
+            {
+                x.ExchangeType = "headers";
+                x.SetBindingArgument("department", "tracking");
+                x.SetBindingArgument("priority", "low");
+                x.SetBindingArgument("x-match", "all"); // its sure that all headers are match
             });
+
+            //e.Bind("order-topic-exchange", x =>
+            //{            
+            //    x.RoutingKey = "order.#";
+            //    x.ExchangeType = "topic";
+            //});
 
             //e.Bind("order-placed-exchange", x =>
             //{
