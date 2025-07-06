@@ -13,11 +13,12 @@ builder.Services.AddMassTransit((x) =>
 
         cfg.ReceiveEndpoint("shipping-order-queue", e =>
         {
-            e.Consumer<OrderPlacedConsumer>();
+            e.Consumer<OrderPlacedConsumer>(context);
 
-            e.Bind("order-placed-exchange", x =>
+            e.Bind("order-topic -exchange", x =>
             {
-                x.ExchangeType = "fanout";
+                x.RoutingKey = "order.*";   // only need messages that contains one word after order 
+                x.ExchangeType = "topic";
             });
 
 
